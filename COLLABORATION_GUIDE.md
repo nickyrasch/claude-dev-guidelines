@@ -199,6 +199,86 @@ RSpec.describe 'Quest Creation', type: :feature, js: true do
 end
 ```
 
+## CI/CD and Code Quality
+
+### GitHub Actions Integration
+All code changes must pass automated quality checks before being considered complete.
+
+#### Required CI/CD Checks
+1. **RuboCop Linting** (`bin/rubocop -f github`)
+   - Zero style offenses allowed
+   - Consistent code formatting enforced
+   - Auto-fixable issues should be corrected with `bundle exec rubocop --autocorrect`
+   
+2. **Brakeman Security Scan** (`bin/brakeman --no-pager`)
+   - Zero security vulnerabilities allowed
+   - Special attention to mass assignment vulnerabilities
+   - Review any parameter whitelisting carefully
+   
+3. **JavaScript Dependency Audit** (`bin/importmap audit`)
+   - No vulnerable JavaScript packages
+   - Keep dependencies up to date
+   - Use free, well-maintained libraries
+
+#### Pre-Commit Quality Checklist
+Before committing any code:
+- [ ] Run `bundle exec rubocop` and fix all offenses
+- [ ] Run `bundle exec brakeman` and address security warnings
+- [ ] Run `bin/importmap audit` to verify JS dependencies
+- [ ] Ensure all tests pass (`bundle exec rspec`)
+- [ ] Manually test affected pages for HAML/syntax errors
+
+#### Common Quality Issues to Avoid
+1. **Mass Assignment Security**: Never allow sensitive parameters (like `:role`) in mass assignment
+   ```ruby
+   # ❌ DANGEROUS - allows privilege escalation
+   params.require(:user).permit(:first_name, :last_name, :email, :role)
+   
+   # ✅ SECURE - use dedicated action for role changes
+   params.require(:user).permit(:first_name, :last_name, :email)
+   ```
+
+2. **Code Style Consistency**: 
+   - Use double quotes for strings (RuboCop enforced)
+   - Proper spacing in array literals: `[ item1, item2 ]`
+   - Remove trailing whitespace
+   - Add final newlines to all files
+
+3. **Security Best Practices**:
+   - Use strong parameters for all form inputs
+   - Implement proper authorization checks with CanCanCan
+   - Validate all user inputs
+   - Use HTTPS and secure cookies in production
+
+### Code Quality Standards
+All code must meet these quality standards:
+
+#### Immediate Failure Conditions
+These issues will cause CI to fail and must be fixed:
+- Any RuboCop style violations
+- Any Brakeman security warnings
+- Any vulnerable JavaScript dependencies
+- Test failures
+- HAML syntax errors causing 500 responses
+
+#### Quality Maintenance Commands
+```bash
+# Fix auto-correctable style issues
+bundle exec rubocop --autocorrect
+
+# Check for security vulnerabilities
+bundle exec brakeman --quiet
+
+# Audit JavaScript dependencies
+bin/importmap audit
+
+# Run full test suite
+bundle exec rspec
+
+# Test app loads without errors
+bundle exec rails runner "puts 'App loads successfully'"
+```
+
 ## Code Standards
 
 ### Rails Conventions
@@ -289,7 +369,9 @@ Every conversation should follow this structured 5-step process:
 - **Handle Blockers**: Address issues immediately, update todos if needed
 
 #### 4. **Code Management** 💾
+- **Quality Checks First**: Run RuboCop, Brakeman, and tests before committing
 - **Commit After Each Feature**: One feature per commit with descriptive messages
+- **CI/CD Compliance**: Ensure all automated checks pass
 - **Push Regularly**: Push to remote after each completed feature
 - **Quality Check**: Ensure Rails app loads without errors before commits
 - **Clean History**: Maintain clear, readable commit history
@@ -321,7 +403,9 @@ Every conversation should follow this structured 5-step process:
 - [ ] Full test coverage achieved (90%+ for new code)
 - [ ] All pages load without 500 errors
 - [ ] Manual testing checklist completed
+- [ ] All CI/CD checks passing (RuboCop, Brakeman, importmap audit)
 - [ ] Code committed and pushed
+- [ ] GitHub Actions pipeline passing (green checkmarks)
 - [ ] Project plan updated with new features
 - [ ] Clear handoff notes for next session
 
@@ -379,6 +463,10 @@ Every conversation should follow this structured 5-step process:
 
 ### Development Commands I Use
 - `bundle exec rails runner "puts 'Rails application loaded successfully'"` - Test app loads
+- `bundle exec rubocop --autocorrect` - Fix code style issues
+- `bundle exec brakeman --quiet` - Check for security vulnerabilities
+- `bin/importmap audit` - Verify JavaScript dependencies are secure
+- `bundle exec rspec` - Run full test suite
 - `git add . && git commit -m "message" && git push` - Commit and push changes
 - `tail -f log/development.log` - Monitor Rails logs
 - `bundle install` - Install gem dependencies
@@ -445,6 +533,13 @@ Every conversation should follow this structured 5-step process:
 ---
 
 *This collaboration guide is a living document. Please suggest updates as our working relationship develops.*
+
+**Recent Updates (July 17, 2025)**:
+- Added comprehensive CI/CD and code quality standards
+- Documented GitHub Actions integration requirements
+- Added security best practices based on real-world fixes
+- Updated session workflow to include quality checks
+- Added pre-commit checklist for consistent code quality
 
 **Last Updated**: July 17, 2025
 **Next Review**: August 17, 2025
